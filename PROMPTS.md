@@ -98,6 +98,8 @@ Este arquivo registra, por parte do teste: as instruções reais que dei, em que
 
 **Cuidados antes de produção**: não aplicável a esta parte.
 
+**Instrução dada (complemento)**: pediu para adicionar, ao final do documento, um parágrafo seu resumindo a abordagem geral (seguir a evidência a partir dos logs, em vez de testar tudo em paralelo). Só copiei o texto para uma seção "Abordagem geral" no fim do arquivo, sem alterar nada.
+
 ---
 
 _As próximas seções (Bônus e finalização) serão adicionadas conforme o desenvolvimento avança._

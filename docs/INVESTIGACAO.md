@@ -39,3 +39,7 @@ _(pendente)_
 ## Testes
 
 _(pendente)_
+
+## Abordagem geral
+
+De forma geral, minha ideia é não sair testando tudo de uma vez, e sim seguir a evidência: começo pelos logs, que apontam a direção, e a partir daí aprofundo no ponto mais provável — API externa, banco ou uma alteração recente. Isso ajuda a chegar na causa sem perder tempo verificando o que o erro já descartou.
