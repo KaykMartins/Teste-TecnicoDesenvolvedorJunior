@@ -75,4 +75,32 @@ Rodado com `php artisan test --filter=DescontoServiceTest` — 11 testes, 11 pas
 
 ---
 
-_As próximas seções (Parte 3 em diante) serão adicionadas conforme o desenvolvimento avança._
+## Parte 3 — Integração com ViaCEP
+
+**Diferenciais incluídos** (todos os "recomendados" do briefing): `updateOrCreate()`, `Http::timeout()` + `retry()`, Form Request para validação, Service para isolar a chamada externa, API Resource e testes automatizados (os dois últimos, decididos com você antes de começar).
+
+**Arquitetura**: `BuscarEnderecoRequest` (sanitiza + valida o formato) → `EnderecoController::store` (orquestra o fluxo) → `ViaCepService::consultar` (isola a chamada HTTP externa, único ponto que sabe que a integração é com o ViaCEP) → `Endereco::updateOrCreate` (persiste sem duplicar) → `EnderecoResource` (formata a resposta).
+
+- **`updateOrCreate()` vs. `firstOrCreate()`**: `firstOrCreate(['cep' => $cep], $dados)` busca por `cep`; se existir, **ignora** `$dados` e devolve o registro como está. `updateOrCreate(['cep' => $cep], $dados)` busca por `cep`; se existir, **atualiza** com `$dados`. Como o enunciado pede "salvar **ou atualizar** sem duplicar", e um mesmo CEP pode ter o logradouro corrigido pelos Correios com o tempo, `updateOrCreate` é o correto aqui — `firstOrCreate` deixaria o endereço desatualizado para sempre depois do primeiro salvamento.
+
+- **Sanitização no Form Request (`prepareForValidation`)**: o CEP chega sujo (`13.289-180`, `13289 180`, etc.), é limpo com `preg_replace('/[^0-9]/', '', ...)` **antes** da regra `digits:8` rodar. Assim o controller e o Service só recebem CEP já limpo (8 dígitos), e o `unique` na migration nunca vê duas grafias do mesmo CEP como registros diferentes.
+
+- **Critério de "CEP não encontrado" (bug real encontrado e corrigido)**: a primeira versão comparava `$dados['erro'] === true` (booleano estrito). Testando manualmente com um CEP fora de qualquer faixa válida (`99999999`), descobri que o ViaCEP responde `{"erro": "true"}` — **string**, não booleano — nesse caso. A comparação estrita não capturava isso, e o CEP inexistente estava sendo salvo no banco como um endereço vazio (bug: retornava 201 em vez de 404). Corrigido com `filter_var($dados['erro'] ?? false, FILTER_VALIDATE_BOOLEAN)`, que trata `true`, `"true"` e `"1"` da mesma forma. Ficou registrado como teste automatizado (`test_cep_inexistente_com_erro_como_string_tambem_retorna_404`) para não regredir.
+
+- **`Http::timeout(5)->retry(2, 200, throw: false)`**: timeout de 5s evita que uma instabilidade do ViaCEP trave a aplicação indefinidamente. `retry(2, 200)` tenta mais 2 vezes (200ms de intervalo) em caso de falha de conexão. `throw: false` é deliberado: sem isso, o próprio Laravel lançaria uma exception genérica ao esgotar as tentativas; com `throw: false`, o método sempre devolve uma `Response`, e o código verifica `$response->failed()` explicitamente — controle de fluxo mais claro e uma mensagem de erro específica da aplicação, não uma exception genérica do cliente HTTP.
+
+- **`ViaCepIndisponivelException` (Service) vs. retorno `null` (Controller)**: o Service **lança exceção** para falha de integração (timeout, conexão, HTTP 5xx/4xx do ViaCEP) — isso é "algo deu errado". Já **CEP não encontrado é um resultado válido, não um erro** — o Service retorna `null`, e o Controller decide o 404. Misturar os dois na mesma exceção obrigaria o Controller a inspecionar a mensagem da exception para saber se é 404 ou 500, o que é frágil.
+
+- **Log dentro do `try/catch` do Service**: `Log::error()` roda no Service (onde a exception original e o CEP consultado estão disponíveis), não no Controller — assim o log tem o contexto técnico completo (mensagem da exception original) mesmo que o Controller só devolva uma mensagem genérica ao cliente da API.
+
+- **Campos `logradouro`, `bairro`, `cidade`, `estado`, `complemento` nullable** na migration: o ViaCEP pode devolver alguns desses campos vazios para determinados CEPs (ex.: `complemento` quase sempre vem vazio; CEPs que cobrem uma cidade inteira podem não ter `logradouro`). Tratar como obrigatório quebraria o insert nesses casos.
+
+- **Rota**: `POST /api/enderecos` recebendo `{"cep": "..."}` no corpo — criei `routes/api.php` do zero (o skeleton do Laravel 13 não vem mais com esse arquivo por padrão) e registrei em `bootstrap/app.php`.
+
+- **Ambiente**: a integração falhava com erro de certificado SSL (`cURL error 60`) porque a instalação do PHP via winget não vem com um CA bundle configurado. Resolvido baixando o `cacert.pem` oficial da cURL e apontando `curl.cainfo`/`openssl.cainfo` para ele no `php.ini` — a alternativa (desabilitar a verificação SSL) nunca foi considerada, por ser uma falha de segurança real, não um workaround aceitável.
+
+**Testes automatizados** (`tests/Feature/EnderecoControllerTest.php`, usando `Http::fake()` para não depender da API real): formato inválido (422, sem sequer chamar o ViaCEP), sanitização de CEP com pontuação, atualização sem duplicar, CEP inexistente com `erro: true` e com `erro: "true"` (o bug corrigido), e falha de integração (500). 19 testes no total do projeto, todos passando.
+
+---
+
+_As próximas seções (Parte 4 em diante) serão adicionadas conforme o desenvolvimento avança._

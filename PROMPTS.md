@@ -63,4 +63,27 @@ Este arquivo registra, por parte do teste: as instruções reais que dei, em que
 
 ---
 
-_As próximas seções (Parte 3 em diante) serão adicionadas conforme o desenvolvimento avança._
+## Parte 3 — Integração com ViaCEP
+
+**Instrução dada**: "podemos prosseguir para parte 3", seguindo a especificação já definida no briefing inicial (endpoint com sanitização, validação, consulta ao ViaCEP, checagem do corpo mesmo com HTTP 200, salvar sem duplicar, log de erro, respostas HTTP claras). Antes de começar, perguntei e você decidiu incluir API Resource e testes automatizados (os dois diferenciais marcados como opcionais no enunciado).
+
+**Onde a IA ajudou**: gerou toda a cadeia (migration, model, Form Request com sanitização, Service isolando a chamada HTTP, exception dedicada, Controller, rota, API Resource, testes com `Http::fake`); subiu o servidor local e testou manualmente os 4 caminhos (sucesso, CEP com pontuação diferente não duplica, CEP inexistente, formato inválido) antes de escrever os testes automatizados.
+
+**Bug real encontrado durante o teste manual, não hipotético**: ao testar com um CEP fora de qualquer faixa válida (`99999999`), o endpoint devolveu 201 (deveria ser 404) e salvou um endereço vazio no banco. Investigando, o ViaCEP retornou `{"erro": "true"}` como **string**, não booleano — a comparação estrita (`=== true`) do código não capturava esse caso. Corrigi com `filter_var(..., FILTER_VALIDATE_BOOLEAN)` e escrevi um teste automatizado específico para essa regressão. Isso não foi encontrado "por inspeção de código" — só apareceu testando de verdade contra a API real antes de escrever os testes fake.
+
+**Problema de ambiente encontrado e resolvido**: a primeira tentativa de chamar o ViaCEP falhou com erro de certificado SSL (`cURL error 60`), porque a instalação do PHP via winget não vem com um CA bundle configurado. Resolvido baixando o `cacert.pem` oficial da cURL e configurando `curl.cainfo`/`openssl.cainfo` no `php.ini` — nunca considerei desabilitar a verificação SSL como alternativa, por ser uma falha de segurança real.
+
+**O que eu decidi (não a IA sozinha)**: incluir API Resource e testes automatizados na Parte 3 (pergunta feita antes de começar a codar).
+
+**O que eu alterei do que a IA gerou**: nada alterado diretamente — revisei o fluxo completo e o bug do `erro: "true"` foi corrigido pela própria IA após o teste manual expor o problema, antes de eu precisar apontar.
+
+**Como validei**: (1) testes manuais reais contra o ViaCEP via `php artisan serve` + `Invoke-WebRequest`, cobrindo os 4 status esperados (201, 200, 404, 422); (2) 6 testes automatizados com `Http::fake` cobrindo os mesmos caminhos mais a falha de integração (500) e a regressão do `erro` como string; (3) suíte completa do projeto rodada no final (19 testes, todos passando).
+
+**Cuidados antes de produção**:
+- O timeout de 5s e o retry de 2 tentativas são valores razoáveis para um teste, mas devem ser calibrados com dados reais de latência do ViaCEP em produção (talvez via config, não hardcoded no Service).
+- Como a integração sempre consulta o ViaCEP de novo mesmo para um CEP já salvo (para manter o endereço atualizado), em alto volume isso significa uma chamada externa por requisição — se performance for um problema, valeria adicionar uma janela de cache (ex.: só re-consultar se o registro tiver mais de X dias).
+- O CA bundle (`cacert.pem`) foi baixado manualmente nesta máquina de desenvolvimento; em um ambiente de produção real, isso é responsabilidade da imagem/infra (Docker base image, servidor gerenciado), não algo para versionar no projeto.
+
+---
+
+_As próximas seções (Parte 4 em diante) serão adicionadas conforme o desenvolvimento avança._
