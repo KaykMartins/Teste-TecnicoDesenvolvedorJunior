@@ -21,4 +21,35 @@ Este documento registra as decisões tomadas ao longo do teste técnico: qual er
 
 ---
 
-_As próximas seções (Parte 1 em diante) serão adicionadas conforme o desenvolvimento avança._
+## Parte 1 — Correção do `calcularDesconto`
+
+**O problema real não era a fórmula.** A precedência de operadores em `$valor - $valor * $desconto / 100` já está correta em PHP (`*` e `/` são avaliados antes do `-`). O bug relatado ("valor negativo, desconto maior que 100%, valor nulo, desconto nulo") é sobre a ausência total de validação de entrada — o método original aceita qualquer coisa e devolve um número sem sentido (ex.: desconto 150% devolve um valor negativo; `null` vira `0` silenciosamente via coerção de tipos do PHP).
+
+**Onde o método mora**: criei `app/Services/DescontoService.php` em vez de deixar a lógica solta em um Controller. Não existe ainda um Controller óbvio para "desconto" no domínio do teste (Clientes/Veículos/Ordens de Serviço), e mesmo que existisse, regra de negócio pura (sem acesso a request/response) fica mais fácil de testar isoladamente numa classe de serviço — é só instanciar e chamar, sem precisar simular uma requisição HTTP.
+
+**Decisão: lançar exceção em vez de fazer clamp.** Apresentei as duas opções e ficou definido lançar `InvalidArgumentException` para cada caso inválido (nulo, não numérico, valor negativo, desconto fora de 0–100), em vez de "corrigir" silenciosamente o valor (ex.: desconto 150 virar 100).
+
+- **Por que exceção e não clamp**: em um sistema de sustentação, um desconto de 150% enviado por engano é sintoma de um bug em algum outro lugar (formulário, integração, cálculo anterior). Se o método "conserta" isso na surdina, o bug do chamador nunca aparece — ele só é descoberto quando alguém audita valores errados no banco, o que é bem mais caro do que descobrir na hora com uma exceção.
+- **Trade-off aceito**: quem chama `calcularDesconto` precisa estar preparado para capturar a exceção (ou deixá-la subir e virar um erro 500/handler global) — dá mais trabalho no chamador do que simplesmente confiar que o método sempre devolve um número. Julgamos que esse trabalho extra é aceitável porque força decisões explícitas de tratamento de erro em vez de mascarar dados inconsistentes.
+
+**Tipagem dos parâmetros**: os parâmetros são `mixed $valor, mixed $desconto` (sem type hint `float`) de propósito. Se fossem tipados como `float`, passar `null` ou uma string não numérica geraria um `TypeError` genérico do próprio PHP, com uma mensagem técnica (ex.: "must be of type float, null given") em vez de uma mensagem de negócio clara. Validando manualmente dentro do método, cada caso (nulo, não numérico, negativo, fora de faixa) tem sua própria mensagem em português, mais fácil de entender e de tratar no chamador.
+
+**Testes**: decidimos por testes automatizados (PHPUnit, que já vem configurado no projeto) em vez de uma lista manual, já que a lógica é pequena, isolada e o custo de escrever os testes é baixo. Criado `tests/Unit/DescontoServiceTest.php` cobrindo:
+
+| Caso | Entrada | Resultado esperado |
+|---|---|---|
+| Desconto normal | `100, 10` | `90.0` |
+| Valor zero | `0, 10` | `0.0` |
+| Desconto zero | `100, 0` | `100.0` |
+| Desconto 100% | `100, 100` | `0.0` |
+| Desconto 101% | `100, 101` | `InvalidArgumentException` |
+| Desconto negativo | `100, -1` | `InvalidArgumentException` |
+| Valor negativo | `-100, 10` | `InvalidArgumentException` |
+| Valor nulo | `null, 10` | `InvalidArgumentException` |
+| Desconto nulo | `100, null` | `InvalidArgumentException` |
+| Valor não numérico | `'abc', 10` | `InvalidArgumentException` |
+| Desconto não numérico | `100, 'abc'` | `InvalidArgumentException` |
+
+Rodado com `php artisan test --filter=DescontoServiceTest` — 11 testes, 11 passando.
+
+_As próximas seções (Parte 2 em diante) serão adicionadas conforme o desenvolvimento avança._
