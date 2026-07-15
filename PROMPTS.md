@@ -36,6 +36,26 @@ Este arquivo registra, por parte do teste: as instruções reais que dei, em que
 - Se este método for exposto via API (endpoint HTTP), a `InvalidArgumentException` não deve vazar como erro 500 puro — precisaria de um handler específico (ou uma Form Request antes de chamar o service) para virar uma resposta 422 com mensagem amigável.
 - Validar se `mixed $valor, mixed $desconto` é aceitável no restante do projeto ou se, ao integrar com outras partes (ex.: Ordens de Serviço), faz mais sentido tipar como `int|float` e tratar `null` como caso à parte antes de chamar o service.
 
+## Parte 2 — Banco de dados (Clientes, Veículos, Ordens de Serviço)
+
+**Instrução dada**: "Podemos seguir" (após a Parte 1), seguindo a especificação já definida no briefing inicial (migrations, models com relações, `sql/consultas.sql` com as 4 consultas comentadas, seeder de exemplo).
+
+**Onde a IA ajudou**: gerou as 3 migrations, os 3 models com as relações (`hasMany`/`belongsTo`), o `DomainDataSeeder` com dados de exemplo, e as 4 consultas em `sql/consultas.sql`; rodou as migrations e testou cada consulta manualmente contra o banco populado antes de considerar a parte pronta.
+
+**O que eu decidi (não a IA sozinha)**:
+- Perguntada sobre o critério de "aberta", escolhi um `status` com só 2 valores (`aberta`/`concluida`), evitando modelar um fluxo de 4 estados que o teste não pediu.
+- Perguntada sobre exclusão em cascata vs. bloqueio, escolhi **restrict** (bloquear exclusão de Cliente/Veículo com filhos), por segurança contra apagar histórico de Ordens de Serviço por engano.
+
+**O que eu alterei do que a IA gerou**: nenhuma alteração de código nesta parte — revisei o schema gerado (`sqlite_master`), os índices únicos de `cpf`/`placa`, e o resultado das 4 consultas rodadas contra os dados do seeder, e todos bateram com o esperado.
+
+**Decisão registrada, mas não perguntada**: a IA decidiu por conta própria que a soma de "valor total gasto" (consultas 3 e 4) inclui ordens com qualquer status (não só `concluida`), por ser a leitura mais literal do enunciado ("SUM(valor) + GROUP BY", sem filtro de status mencionado). Documentado em `docs/DECISOES.md` como uma leitura alternativa possível, para eu revisar se concordo.
+
+**Como validei**: rodei `php artisan migrate` (schema limpo), inspecionei o `CREATE TABLE` real gerado no SQLite (`sqlite_master`) para confirmar as constraints `restrict`/`unique`, rodei `php artisan migrate:fresh --seed`, e executei as 4 consultas manualmente via um script PHP temporário, conferindo os resultados linha a linha (incluindo o caso de borda do cliente sem veículos, que retornou array vazio em vez de erro).
+
+**Cuidados antes de produção**:
+- O `restrictOnDelete()` significa que excluir um Cliente com veículos ativos falha com erro de integridade — se isso vier a ser uma operação de negócio real (ex.: LGPD), precisaria de um fluxo explícito (soft delete ou exclusão em cascata controlada por código, com confirmação), não apenas deixar o banco rejeitar.
+- Revisar com o time se "total gasto" deveria mesmo incluir ordens ainda abertas ou só as concluídas — é uma leitura que pode mudar o resultado que um gestor vê no relatório.
+
 ---
 
-_As próximas seções (Parte 2 em diante) serão adicionadas conforme o desenvolvimento avança._
+_As próximas seções (Parte 3 em diante) serão adicionadas conforme o desenvolvimento avança._

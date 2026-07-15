@@ -52,4 +52,27 @@ Este documento registra as decisões tomadas ao longo do teste técnico: qual er
 
 Rodado com `php artisan test --filter=DescontoServiceTest` — 11 testes, 11 passando.
 
-_As próximas seções (Parte 2 em diante) serão adicionadas conforme o desenvolvimento avança._
+## Parte 2 — Banco de dados (Clientes, Veículos, Ordens de Serviço)
+
+**Critério de "aberta" (decisão sua)**: o campo `status` de `ordens_servico` tem apenas dois valores possíveis, via `enum('status', ['aberta', 'concluida'])`: `aberta` e `concluida`. A consulta obrigatória #2 filtra literalmente `status = 'aberta'` — não há ambiguidade porque não existe um terceiro estado (como "em andamento" ou "cancelada") que pudesse ser confundido com "aberta".
+
+- **Alternativa que ficou de fora**: um fluxo de 4 estados (aberta / em_andamento / concluida / cancelada), mais realista para uma oficina, mas que exigiria decidir se "aberta" significa só o valor inicial ou qualquer coisa não finalizada — complexidade que o teste não pediu.
+
+**Comportamento de exclusão em cascata (decisão sua)**: as chaves estrangeiras usam `restrictOnDelete()` — o banco impede excluir um Cliente que ainda tenha Veículos, ou um Veículo que ainda tenha Ordens de Serviço.
+
+- **Por quê**: em um sistema de sustentação, um `DELETE` acidental de um Cliente não deve apagar silenciosamente o histórico de Ordens de Serviço (que representa valores cobrados/faturados). Se alguém realmente precisar excluir um cliente, precisa remover os veículos e ordens primeiro — uma ação deliberada, não um efeito colateral.
+- **Trade-off aceito**: exclusões legítimas (ex.: LGPD, cliente pediu para apagar os dados) dão mais trabalho — seria necessário um fluxo específico (soft delete ou exclusão em cascata controlada por código, não pelo banco) se isso vier a ser um requisito real.
+
+**Nome da tabela de Ordens de Serviço**: o Laravel, ao gerar a migration a partir do nome do model `OrdemServico`, sugere por convenção a tabela `ordem_servicos`. Preferimos `ordens_servico` (mais próximo de como o domínio é descrito no enunciado: "Ordens de Serviço"), então defini `protected $table = 'ordens_servico';` explicitamente no model.
+
+**Coluna `updated_at`**: o schema pedido no enunciado lista apenas `id, veiculo_id, valor, status, created_at` para Ordens de Serviço — sem `updated_at`. Segui essa especificação literalmente (`$table->timestamp('created_at')->useCurrent();`, sem `$table->timestamps()`) e configurei `const UPDATED_AT = null;` no model para o Eloquent não tentar gravar uma coluna inexistente ao salvar. Vale registrar o trade-off: sem `updated_at`, não há como saber quando uma OS mudou de "aberta" para "concluida" só olhando a tabela — para o escopo deste teste isso não é necessário, mas seria a primeira coisa a adicionar num cenário real de sustentação.
+
+**CPF e placa únicos**: adicionei `unique()` nas migrations de `clientes.cpf` e `veiculos.placa`, mesmo sem o enunciado exigir explicitamente (diferente do `cep` da Parte 3, que é unique por especificação). Não tratei isso como uma decisão a perguntar porque é uma regra de integridade óbvia do domínio — dois clientes não têm o mesmo CPF, duas placas não se repetem.
+
+**"Total gasto" inclui ordens abertas**: nas consultas 3 e 4 (diferenciais), a soma (`SUM(valor)`) considera **todas** as ordens de serviço do cliente, independentemente do status — não apenas as concluídas. Interpretamos "valor total gasto" como o total movimentado pelo cliente na oficina (o enunciado pede literalmente `SUM(valor)` + `GROUP BY`, sem mencionar filtro de status). Se a intenção fosse "valor efetivamente pago/recebido", a query correta seria a mesma com `WHERE status = 'concluida'` antes do `GROUP BY` — fica registrado aqui para o caso de você preferir essa segunda leitura.
+
+**Seeder (`DomainDataSeeder`)**: criei 7 clientes com quantidades variadas de veículos e ordens de serviço (incluindo um cliente propositalmente sem nenhum veículo, para testar o caso de borda da consulta 1) para que as 4 consultas em `sql/consultas.sql` pudessem ser validadas com resultados reais, não hipotéticos. Rodado via `php artisan migrate:fresh --seed` e cada consulta foi executada manualmente contra o banco para conferir o resultado antes de considerar a parte concluída.
+
+---
+
+_As próximas seções (Parte 3 em diante) serão adicionadas conforme o desenvolvimento avança._
