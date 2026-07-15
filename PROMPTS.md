@@ -86,4 +86,18 @@ Este arquivo registra, por parte do teste: as instruções reais que dei, em que
 
 ---
 
-_As próximas seções (Parte 4 em diante) serão adicionadas conforme o desenvolvimento avança._
+## Parte 5 — Investigação de problemas
+
+**Instrução dada**: eu primeiro pedi um resumo/roteiro dos eixos a cobrir (não o texto final, já que o enunciado pede que essa parte "soe como eu"). Depois, você escreveu o raciocínio completo com suas próprias palavras (perguntas ao cliente, logs, API externa, banco de dados, alterações recentes e deploy) e me pediu para "adicionar em investigação.md".
+
+**Onde a IA ajudou**: no primeiro pedido, gerei apenas um resumo/roteiro dos eixos exigidos pelo enunciado, como ponto de partida — não um rascunho pronto, porque você deixou claro que essa parte é pessoal. Depois, só formatei o texto que você mesmo escreveu em `docs/INVESTIGACAO.md` (títulos de seção, lista numerada), sem alterar o conteúdo ou o tom.
+
+**O que eu identifiquei, mas não decidi sozinho**: o enunciado pede para cobrir *todos* os eixos (informações do cliente, logs, API externa, banco, código-fonte, alterações recentes, deploy, variáveis de ambiente, homologação vs. produção, testes). O que você escreveu cobre a maioria, mas falta "variáveis de ambiente", "homologação vs. produção" e "testes". Perguntei se você queria escrever essas partes ou se eu deveria rascunhar — você decidiu escrever você mesmo, no seu tempo. Deixei marcadores `_(pendente)_` no arquivo para esses três eixos, para não esquecer antes da entrega final.
+
+**Como validei**: nenhuma validação técnica aplicável (é um documento de raciocínio, não código).
+
+**Cuidados antes de produção**: não aplicável a esta parte.
+
+---
+
+_As próximas seções (Bônus e finalização) serão adicionadas conforme o desenvolvimento avança._
