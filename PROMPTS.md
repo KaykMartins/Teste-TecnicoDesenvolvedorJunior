@@ -54,7 +54,12 @@ Este arquivo registra, por parte do teste: as instruções reais que dei, em que
 
 **Cuidados antes de produção**:
 - O `restrictOnDelete()` significa que excluir um Cliente com veículos ativos falha com erro de integridade — se isso vier a ser uma operação de negócio real (ex.: LGPD), precisaria de um fluxo explícito (soft delete ou exclusão em cascata controlada por código, com confirmação), não apenas deixar o banco rejeitar.
-- Revisar com o time se "total gasto" deveria mesmo incluir ordens ainda abertas ou só as concluídas — é uma leitura que pode mudar o resultado que um gestor vê no relatório.
+
+**Instrução dada (revisão)**: "Coloque contando como gastos concluídos e gastos ainda não concluídos" — pediu para eu não somar tudo junto nas consultas 3 e 4, e sim separar por status.
+
+**Onde a IA ajudou**: reescreveu as consultas 3 e 4 usando `SUM(CASE WHEN status = ... THEN valor ELSE 0 END)` para gerar três colunas (`gasto_concluido`, `gasto_em_aberto`, `total_gasto`) em vez de uma soma única, e retestou contra o banco populado.
+
+**Como validei**: rodei um script PHP temporário contra o banco seedado e conferi que `gasto_concluido + gasto_em_aberto = total_gasto` para cada cliente (ex.: João Silva: 1550 + 800 = 2350).
 
 ---
 

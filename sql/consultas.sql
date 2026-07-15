@@ -37,13 +37,15 @@ WHERE ordens_servico.status = 'aberta';
 
 -- -----------------------------------------------------------------------------
 -- 3. Calcular o valor total gasto por um cliente (DIFERENCIAL)
--- Soma o valor de TODAS as ordens de serviço do cliente (não filtra por status:
--- entendemos "total gasto" como o total movimentado pelo cliente na oficina,
--- incluindo ordens ainda em aberto). Troque o "?" pelo id do cliente desejado.
+-- Separa o gasto CONCLUÍDO (ordens com status = 'concluida') do gasto AINDA
+-- EM ABERTO (status = 'aberta'), além do total geral (soma dos dois).
+-- Troque o "?" pelo id do cliente desejado.
 -- -----------------------------------------------------------------------------
 SELECT
     clientes.id AS cliente_id,
     clientes.nome,
+    SUM(CASE WHEN ordens_servico.status = 'concluida' THEN ordens_servico.valor ELSE 0 END) AS gasto_concluido,
+    SUM(CASE WHEN ordens_servico.status = 'aberta' THEN ordens_servico.valor ELSE 0 END) AS gasto_em_aberto,
     SUM(ordens_servico.valor) AS total_gasto
 FROM clientes
 INNER JOIN veiculos ON veiculos.cliente_id = clientes.id
@@ -54,14 +56,17 @@ GROUP BY clientes.id, clientes.nome;
 
 -- -----------------------------------------------------------------------------
 -- 4. Listar os cinco clientes com maior valor gasto (DIFERENCIAL)
--- Mesma regra de "total gasto" da consulta 3 (todas as ordens, sem filtrar status),
--- agora para todos os clientes, ordenado do maior para o menor gasto, top 5.
--- Clientes sem nenhuma ordem de serviço (ex.: sem veículos) não aparecem, pois
--- o INNER JOIN exige pelo menos uma ordem de serviço associada.
+-- Mesma separação da consulta 3 (gasto concluído vs. em aberto vs. total),
+-- agora para todos os clientes, ordenado pelo total geral (concluído + em
+-- aberto), do maior para o menor, top 5. Clientes sem nenhuma ordem de
+-- serviço (ex.: sem veículos) não aparecem, pois o INNER JOIN exige pelo
+-- menos uma ordem de serviço associada.
 -- -----------------------------------------------------------------------------
 SELECT
     clientes.id AS cliente_id,
     clientes.nome,
+    SUM(CASE WHEN ordens_servico.status = 'concluida' THEN ordens_servico.valor ELSE 0 END) AS gasto_concluido,
+    SUM(CASE WHEN ordens_servico.status = 'aberta' THEN ordens_servico.valor ELSE 0 END) AS gasto_em_aberto,
     SUM(ordens_servico.valor) AS total_gasto
 FROM clientes
 INNER JOIN veiculos ON veiculos.cliente_id = clientes.id
