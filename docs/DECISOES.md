@@ -60,7 +60,7 @@ Três opções foram avaliadas:
 2. **BCMath** (`bcmul`/`bcsub` com strings) — aritmética decimal exata, sem nenhum erro de ponto flutuante em nenhuma etapa. Descartada aqui: mudaria a assinatura do método (entrada/saída em `string`, não `float`), exigiria reescrever os 11 testes existentes que comparam contra `float`, e é mais poder do que um único cálculo de desconto pede — compensa mais em sistemas com muitas operações financeiras encadeadas.
 3. **Centavos como inteiro** — converter para centavos, calcular em inteiro (exato), converter de volta. Descartada: converter `19.99` (float, que já pode chegar com erro de representação) em `1999` centavos ainda exige um `round()` na entrada — não elimina o arredondamento, só move ele de lugar. Além disso, o resto do domínio trabalha em reais/decimal, não centavos; usar centavos só neste método criaria uma representação de dinheiro inconsistente dentro do projeto.
 
-**Decisão: opção 1 (`round($resultado, 2)`)** — menor mudança, compatível com a precisão já usada no restante do domínio. Implementado como `return round($valor - $valor * $desconto / 100, 2);`. Teste adicionado (`test_resultado_e_arredondado_para_duas_casas_decimais`) comparando `calcularDesconto(19.99, 15)` contra `16.99`, e confirmando com `number_format($resultado, 2) === '16.99'` que não sobra "lixo" decimal no resultado. 12 testes no arquivo, todos passando (20 no projeto inteiro).
+**Decisão: opção 1 (`round($resultado, 2)`)** — menor mudança, compatível com a precisão já usada no restante do domínio. Implementado como `return round($valor - $valor * $desconto / 100, 2);`. Teste adicionado (`test_resultado_e_arredondado_para_duas_casas_decimais`) comparando `calcularDesconto(19.99, 15)` contra `16.99`, e confirmando com `number_format($resultado, 2) === '16.99'` que não sobra "lixo" decimal no resultado. 12 testes no arquivo, todos passando (18 no projeto inteiro — ver nota sobre remoção dos `ExampleTest` de scaffolding em `PROMPTS.md`).
 
 ## Parte 2 — Banco de dados (Clientes, Veículos, Ordens de Serviço)
 
@@ -109,7 +109,7 @@ Três opções foram avaliadas:
 
 - **Ambiente**: a integração falhava com erro de certificado SSL (`cURL error 60`) porque a instalação do PHP via winget não vem com um CA bundle configurado. Resolvido baixando o `cacert.pem` oficial da cURL e apontando `curl.cainfo`/`openssl.cainfo` para ele no `php.ini` — a alternativa (desabilitar a verificação SSL) nunca foi considerada, por ser uma falha de segurança real, não um workaround aceitável.
 
-**Testes automatizados** (`tests/Feature/EnderecoControllerTest.php`, usando `Http::fake()` para não depender da API real): formato inválido (422, sem sequer chamar o ViaCEP), sanitização de CEP com pontuação, atualização sem duplicar, CEP inexistente com `erro: true` e com `erro: "true"` (o bug corrigido), e falha de integração (500). 19 testes no total do projeto, todos passando.
+**Testes automatizados** (`tests/Feature/EnderecoControllerTest.php`, usando `Http::fake()` para não depender da API real): formato inválido (422, sem sequer chamar o ViaCEP), sanitização de CEP com pontuação, atualização sem duplicar, CEP inexistente com `erro: true` e com `erro: "true"` (o bug corrigido), e falha de integração (500). 18 testes no total do projeto, todos passando (os 2 `ExampleTest` de scaffolding do Laravel foram removidos por não testarem nada da aplicação).
 
 ---
 

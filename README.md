@@ -84,7 +84,7 @@ A aplicação sobe em `http://127.0.0.1:8000`.
 php artisan test
 ```
 
-20 testes automatizados (PHPUnit): validação/arredondamento do `DescontoService` (Parte 1) e o fluxo completo da integração com ViaCEP via `Http::fake` (Parte 3) — sucesso, sanitização de CEP, atualização sem duplicar, CEP inexistente e falha de integração.
+18 testes automatizados (PHPUnit): validação/arredondamento do `DescontoService` (Parte 1) e o fluxo completo da integração com ViaCEP via `Http::fake` (Parte 3) — sucesso, sanitização de CEP, atualização sem duplicar, CEP inexistente e falha de integração.
 
 ## Endpoint da API (Parte 3 — ViaCEP)
 

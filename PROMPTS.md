@@ -1,6 +1,6 @@
 # Uso de IA neste projeto
 
-Ferramentas utilizadas: **Claude Code** (VS Code, sessão interativa — o trabalho foi feito parte por parte, com pausas para revisão e decisão a cada etapa), **ChatGPT** e **Obsidian**. Detalhes de cada uma na seção "Parte 4" abaixo.
+Ferramentas utilizadas: **Claude Code** (VS Code, sessão interativa — o trabalho foi feito parte por parte, com pausas para revisão e decisão a cada etapa), **ChatGPT**, **Obsidian** e **Claude Fable 5** (usado só na tela do Bônus). Detalhes de cada uma na seção "Parte 4" abaixo.
 
 Este arquivo registra, por parte do teste: as instruções reais que dei, em que a IA ajudou, o que eu alterei do que foi gerado, como validei, e quais cuidados eu teria antes de produção.
 
@@ -13,6 +13,7 @@ Durante o desenvolvimento do projeto foram utilizadas as seguintes ferramentas:
 - **Claude.ai / Claude Code (VS Code)**: utilizado como apoio no desenvolvimento, geração de código, revisão de implementação e auxílio na resolução de problemas técnicos.
 - **ChatGPT**: utilizado para criação, organização e refinamento de prompts utilizados durante o desenvolvimento.
 - **Obsidian**: utilizado para estruturar a linha de raciocínio do projeto e organizar decisões técnicas.
+- **Claude Fable 5**: utilizado exclusivamente para gerar a tela de cadastro de clientes do Bônus (front-end isolado, fora do escopo do Laravel) — ver `docs/BONUS.md` para os prompts completos.
 
 Os prompts utilizados durante o desenvolvimento estão documentados neste arquivo.
 
@@ -136,7 +137,7 @@ Também seriam realizados: execução da suíte completa de testes no pipeline; 
 
 **O que eu alterei do que a IA gerou**: As alterações que dirigi nesta parte estão consolidadas no resumo no fim do arquivo (Resumo: quais alterações realizei no código gerado) — aqui, a implementação de uma linha (`return round($valor - $valor * $desconto / 100, 2);`) e um teste novo cobrindo o caso específico.
 
-**Como validei**: rodei `php artisan test --filter=DescontoServiceTest` (12 testes, todos passando) e depois a suíte completa (20 testes). O teste novo verifica tanto o valor (`16.99`) quanto a ausência de "lixo" decimal (`number_format($resultado, 2) === '16.99'`).
+**Como validei**: rodei `php artisan test --filter=DescontoServiceTest` (12 testes, todos passando) e depois a suíte completa (18 testes). O teste novo verifica tanto o valor (`16.99`) quanto a ausência de "lixo" decimal (`number_format($resultado, 2) === '16.99'`).
 
 **Cuidados antes de produção**: `round()` resolve o caso de um cálculo isolado, mas se este valor entrar em somas/cálculos encadeados sem re-arredondar a cada etapa, o erro de ponto flutuante pode reaparecer — vale revisar se algum fluxo futuro (ex.: somar várias Ordens de Serviço com desconto aplicado) precisa de um cuidado adicional.
 
@@ -152,7 +153,7 @@ Também seriam realizados: execução da suíte completa de testes no pipeline; 
 
 **O que eu alterei do que a IA gerou**: As alterações que dirigi nesta parte estão consolidadas no resumo no fim do arquivo (Resumo: quais alterações realizei no código gerado). Onde não mexi diretamente no código gerado, foi por ter revisado o schema gerado (`sqlite_master`), os índices únicos de `cpf`/`placa`, e o resultado das 4 consultas rodadas contra os dados do seeder, e todos bateram com o esperado.
 
-**Decisão registrada, mas não perguntada**: a IA decidiu por conta própria que a soma de "valor total gasto" (consultas 3 e 4) inclui ordens com qualquer status (não só `concluida`), por ser a leitura mais literal do enunciado ("SUM(valor) + GROUP BY", sem filtro de status mencionado). Documentado em `docs/DECISOES.md` como uma leitura alternativa possível, para eu revisar se concordo.
+**Decisão registrada, mas não perguntada (revisada logo abaixo)**: a IA decidiu por conta própria que a soma de "valor total gasto" (consultas 3 e 4) incluía ordens com qualquer status (não só `concluida`), por ser a leitura mais literal do enunciado ("SUM(valor) + GROUP BY", sem filtro de status mencionado). Documentado em `docs/DECISOES.md` como uma leitura alternativa possível. Essa leitura foi revisada logo em seguida — ver "Instrução dada (revisão)" abaixo, onde pedi para separar em gasto concluído, em aberto e total.
 
 **Como validei**: rodei `php artisan migrate` (schema limpo), inspecionei o `CREATE TABLE` real gerado no SQLite (`sqlite_master`) para confirmar as constraints `restrict`/`unique`, rodei `php artisan migrate:fresh --seed`, e executei as 4 consultas manualmente via um script PHP temporário, conferindo os resultados linha a linha (incluindo o caso de borda do cliente sem veículos, que retornou array vazio em vez de erro).
 
@@ -181,7 +182,7 @@ Também seriam realizados: execução da suíte completa de testes no pipeline; 
 
 **O que eu alterei do que a IA gerou**: As alterações que dirigi nesta parte estão consolidadas no resumo no fim do arquivo (Resumo: quais alterações realizei no código gerado). Revisei o fluxo completo, e o bug do `erro: "true"` foi corrigido pela própria IA após o teste manual expor o problema, antes de eu precisar apontar.
 
-**Como validei**: (1) testes manuais reais contra o ViaCEP via `php artisan serve` + `Invoke-WebRequest`, cobrindo os 4 status esperados (201, 200, 404, 422); (2) 6 testes automatizados com `Http::fake` cobrindo os mesmos caminhos mais a falha de integração (500) e a regressão do `erro` como string; (3) suíte completa do projeto rodada no final (19 testes, todos passando).
+**Como validei**: (1) testes manuais reais contra o ViaCEP via `php artisan serve` + `Invoke-WebRequest`, cobrindo os 4 status esperados (201, 200, 404, 422); (2) 6 testes automatizados com `Http::fake` cobrindo os mesmos caminhos mais a falha de integração (500) e a regressão do `erro` como string; (3) suíte completa do projeto rodada no final (18 testes, todos passando).
 
 **Cuidados antes de produção**:
 - O timeout de 5s e o retry de 2 tentativas são valores razoáveis para um teste, mas devem ser calibrados com dados reais de latência do ViaCEP em produção (talvez via config, não hardcoded no Service).
@@ -196,7 +197,7 @@ Também seriam realizados: execução da suíte completa de testes no pipeline; 
 
 **Onde a IA ajudou**: no primeiro pedido, gerei apenas um resumo/roteiro dos eixos exigidos pelo enunciado, como ponto de partida — não um rascunho pronto, porque você deixou claro que essa parte é pessoal. Depois, só formatei o texto que você mesmo escreveu em `docs/INVESTIGACAO.md` (títulos de seção, lista numerada), sem alterar o conteúdo ou o tom.
 
-**O que eu identifiquei, mas não decidi sozinho**: o enunciado pede para cobrir *todos* os eixos (informações do cliente, logs, API externa, banco, código-fonte, alterações recentes, deploy, variáveis de ambiente, homologação vs. produção, testes). O que você escreveu cobre a maioria, mas falta "variáveis de ambiente", "homologação vs. produção" e "testes". Perguntei se você queria escrever essas partes ou se eu deveria rascunhar — você decidiu escrever você mesmo, no seu tempo. Deixei marcadores `_(pendente)_` no arquivo para esses três eixos, para não esquecer antes da entrega final.
+**O que eu identifiquei, mas não decidi sozinho**: o enunciado pede para cobrir *todos* os eixos (informações do cliente, logs, API externa, banco, código-fonte, alterações recentes, deploy, variáveis de ambiente, homologação vs. produção, testes). Na primeira versão, faltavam três: "variáveis de ambiente", "homologação vs. produção" e "testes". Perguntei se você queria escrever essas partes ou se eu deveria rascunhar — você decidiu escrever você mesmo. Os três eixos já estão escritos por você em `docs/INVESTIGACAO.md`, concluindo a Parte 5.
 
 **Como validei**: nenhuma validação técnica aplicável (é um documento de raciocínio, não código).
 
@@ -228,9 +229,9 @@ Ver [docs/BONUS.md](docs/BONUS.md) para o conteúdo completo (prompts + prints +
 
 **Instrução dada**: "readme final".
 
-**Onde a IA ajudou**: expandiu o README esqueleto (que só tinha requisitos, `.env` e migrations) para a versão final: seção "Sobre o projeto" resumindo as 5 partes + bônus, instruções de instalação do zero (`git clone` + `composer install`), seção de testes (`php artisan test`, 20 testes), documentação do endpoint da API (`POST /api/enderecos` com tabela de status esperados), link para `sql/consultas.sql`, e um resumo de decisões técnicas cobrindo as partes 1–3 (antes só mencionava Laravel/SQLite do setup).
+**Onde a IA ajudou**: expandiu o README esqueleto (que só tinha requisitos, `.env` e migrations) para a versão final: seção "Sobre o projeto" resumindo as 5 partes + bônus, instruções de instalação do zero (`git clone` + `composer install`), seção de testes (`php artisan test`, 18 testes), documentação do endpoint da API (`POST /api/enderecos` com tabela de status esperados), link para `sql/consultas.sql`, e um resumo de decisões técnicas cobrindo as partes 1–3 (antes só mencionava Laravel/SQLite do setup).
 
-**Como validei**: rodei `php artisan test` (20 testes, todos passando) e `php artisan route:list --path=api` para confirmar que os números e a rota citados no README batem com o estado real do projeto antes de escrever.
+**Como validei**: rodei `php artisan test` (18 testes, todos passando) e `php artisan route:list --path=api` para confirmar que os números e a rota citados no README batem com o estado real do projeto antes de escrever.
 
 **Cuidados antes de produção**: não aplicável — é documentação, não código.
 
@@ -246,3 +247,7 @@ Não editei o código linha a linha. Intervim dirigindo decisões, pedindo mudan
 - **Parte 3**: pedi API Resource e testes, e direcionei a correção do bug em que o ViaCEP retornava `{"erro":"true"}` como string, o que fazia o sistema salvar um CEP inexistente em vez de responder 404.
 
 Onde não mexi no código, foi por ter revisado o que foi gerado e concordado, não por aceitar sem conferir.
+
+## Nota sobre a contagem de testes
+
+O projeto tinha 20 testes até este ponto, mas 2 deles eram `ExampleTest.php` (um em `tests/Unit`, outro em `tests/Feature`) — scaffolding padrão gerado pelo `laravel/laravel` na instalação, que não testam nada específico desta aplicação. Foram removidos para a contagem refletir só testes com propósito real: **18 testes**, todos escritos para cobrir os cenários das Partes 1 e 3. Todas as menções de contagem neste arquivo, em `README.md` e em `docs/DECISOES.md` foram atualizadas para 18.
