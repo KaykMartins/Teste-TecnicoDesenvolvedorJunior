@@ -128,4 +128,12 @@ Ver [docs/BONUS.md](docs/BONUS.md) para o conteúdo completo (prompts + prints +
 
 ---
 
-_A seção final (finalização/README) será adicionada conforme o desenvolvimento avança._
+## README final
+
+**Instrução dada**: "readme final".
+
+**Onde a IA ajudou**: expandiu o README esqueleto (que só tinha requisitos, `.env` e migrations) para a versão final: seção "Sobre o projeto" resumindo as 5 partes + bônus, instruções de instalação do zero (`git clone` + `composer install`), seção de testes (`php artisan test`, 20 testes), documentação do endpoint da API (`POST /api/enderecos` com tabela de status esperados), link para `sql/consultas.sql`, e um resumo de decisões técnicas cobrindo as partes 1–3 (antes só mencionava Laravel/SQLite do setup).
+
+**Como validei**: rodei `php artisan test` (20 testes, todos passando) e `php artisan route:list --path=api` para confirmar que os números e a rota citados no README batem com o estado real do projeto antes de escrever.
+
+**Cuidados antes de produção**: não aplicável — é documentação, não código.
