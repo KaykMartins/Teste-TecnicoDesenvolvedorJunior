@@ -1,8 +1,100 @@
 # Uso de IA neste projeto
 
-Ferramenta utilizada: **Claude Code**, rodando como extensão dentro do VS Code, em sessão interativa (não foi gerado código "de uma vez" — o trabalho foi feito parte por parte, com pausas para revisão e decisão a cada etapa).
+Ferramentas utilizadas: **Claude Code** (VS Code, sessão interativa — o trabalho foi feito parte por parte, com pausas para revisão e decisão a cada etapa), **ChatGPT** e **Obsidian**. Detalhes de cada uma na seção "Parte 4" abaixo.
 
 Este arquivo registra, por parte do teste: as instruções reais que dei, em que a IA ajudou, o que eu alterei do que foi gerado, como validei, e quais cuidados eu teria antes de produção.
+
+## Parte 4 — Uso de Inteligência Artificial
+
+### Ferramentas utilizadas
+
+Durante o desenvolvimento do projeto foram utilizadas as seguintes ferramentas:
+
+- **Claude.ai / Claude Code (VS Code)**: utilizado como apoio no desenvolvimento, geração de código, revisão de implementação e auxílio na resolução de problemas técnicos.
+- **ChatGPT**: utilizado para criação, organização e refinamento de prompts utilizados durante o desenvolvimento.
+- **Obsidian**: utilizado para estruturar a linha de raciocínio do projeto e organizar decisões técnicas.
+
+Os prompts utilizados durante o desenvolvimento estão documentados neste arquivo.
+
+### Em quais partes do teste a IA auxiliou
+
+A IA foi utilizada como par de programação durante todo o desenvolvimento do teste, não apenas em uma etapa específica. O auxílio ocorreu nas seguintes partes:
+
+**Parte 1 — Regras de negócio e testes**
+
+A IA auxiliou na correção da função `calcularDesconto` e na criação dos testes automatizados. Durante essa etapa, as decisões foram definidas antes da implementação. Por exemplo, foi escolhido lançar uma exceção para cenários inválidos em vez de realizar uma correção silenciosa do valor recebido.
+
+**Parte 2 — Banco de dados e consultas**
+
+A IA auxiliou na criação de: migrations; models; relacionamentos; seeder; consultas SQL solicitadas. Também ajudou na organização das consultas, incluindo a separação dos valores de gastos em: valores concluídos; valores em aberto; total geral.
+
+**Parte 3 — Integração com ViaCEP**
+
+A IA auxiliou na construção de toda a cadeia da integração: Form Request; Service; Controller; API Resource; testes automatizados. Durante essa etapa também foi identificado e corrigido um problema no tratamento da resposta do ViaCEP, onde um CEP inexistente retornava `{"erro":"true"}` como string, fazendo com que o sistema interpretasse incorretamente a resposta e permitisse o salvamento de um CEP inválido.
+
+**Parte 5 — Investigação de problemas**
+
+Esta parte foi escrita por mim, com raciocínio próprio. A IA auxiliou apenas na formatação do texto, sem alterar o conteúdo ou a linha de investigação.
+
+**Documentação**
+
+Também houve auxílio na organização dos arquivos de documentação: `README.md`; `DECISOES.md`; documentação final do teste.
+
+O uso da IA foi assistido e supervisionado. As decisões técnicas foram definidas antes da implementação, o código gerado foi revisado e todas as alterações foram validadas antes de serem aceitas.
+
+### Quais alterações foram realizadas no código gerado
+
+As principais alterações e direcionamentos realizados foram:
+
+- Ajuste das consultas SQL para separar corretamente valores pagos, pendentes e totais, facilitando a análise dos dados.
+- Definição do comportamento da função `calcularDesconto`, optando por lançar exceções em casos inválidos ao invés de alterar valores automaticamente.
+- Criação de testes automatizados para garantir os cenários esperados e evitar regressões.
+- Definição do relacionamento entre entidades utilizando `restrictOnDelete()`, evitando exclusões acidentais de dados relacionados.
+- Implementação de API Resource na integração com ViaCEP.
+- Inclusão de testes para validar diferentes cenários da integração.
+- Correção do tratamento de CEP inexistente, garantindo que a aplicação retorne erro corretamente em vez de salvar informações inválidas.
+
+As alterações não foram feitas simplesmente aceitando o código gerado pela IA. Cada implementação foi revisada, avaliada e validada antes de ser incorporada ao projeto.
+
+### Como foi verificado se o código estava correto
+
+A validação não foi baseada apenas na leitura do código gerado. Cada parte foi verificada conforme sua finalidade.
+
+**Código e regras de negócio**
+
+Nas partes envolvendo lógica de aplicação, foram executados testes automatizados utilizando `php artisan test`. Foram validados cenários como: regras de desconto; casos de borda; integração com sucesso; CEP inexistente; formato inválido; falhas de comunicação.
+
+**Banco de dados**
+
+Além de verificar se as migrations executavam corretamente, foi feita uma validação do banco gerado para confirmar: criação correta das tabelas; relacionamentos; constraints; regras de exclusão. As consultas foram executadas utilizando o banco populado pelo seeder e os resultados foram conferidos manualmente.
+
+**Integração ViaCEP**
+
+A integração foi testada inicialmente contra a API real do ViaCEP. Esse processo permitiu identificar um comportamento inesperado da API, onde CEPs inexistentes retornavam uma propriedade `"erro"` como string. Após a correção, o comportamento foi coberto por testes automatizados para evitar regressões futuras.
+
+De forma geral, o critério utilizado para considerar uma implementação concluída foi: testes automatizados passando; comportamento validado; resultado conferido com o banco e integrações reais.
+
+### Cuidados antes de colocar a solução em produção
+
+Antes de realizar um deploy em produção, alguns pontos precisariam ser avaliados:
+
+**Parte 1 — Regras de negócio**
+
+Como o cálculo de desconto utiliza exceções para valores inválidos, seria necessário garantir que essas exceções sejam tratadas corretamente pela aplicação, evitando que sejam exibidos erros técnicos para o usuário final. Também seria importante validar com o responsável pelo negócio a regra de arredondamento utilizada.
+
+**Parte 2 — Banco de dados**
+
+O uso de `restrictOnDelete()` impede a exclusão de registros que possuem dependências. Caso futuramente exista uma necessidade real de exclusão de clientes, seria necessário definir uma estratégia adequada, como: soft delete; remoção controlada; fluxo específico de exclusão.
+
+**Parte 3 — Integração ViaCEP**
+
+Em um ambiente de produção com grande volume de acessos, seria recomendado: implementar cache de consultas de CEP; revisar valores de timeout e retry; tornar configurações externas parametrizáveis por ambiente; monitorar falhas de comunicação com a API.
+
+**Antes do deploy final**
+
+Também seriam realizados: execução da suíte completa de testes no pipeline; validação das variáveis de ambiente; conferência das configurações entre homologação e produção; acompanhamento dos logs após publicação.
+
+---
 
 ## Setup inicial
 
@@ -28,7 +120,7 @@ Este arquivo registra, por parte do teste: as instruções reais que dei, em que
 - Perguntada antes de escrever qualquer código, escolhi **lançar exceção** (`InvalidArgumentException`) em vez de fazer *clamp* silencioso dos valores fora de faixa.
 - Perguntada em seguida, escolhi **testes automatizados (PHPUnit)** em vez de apenas uma lista manual de casos.
 
-**O que eu alterei do que a IA gerou**: nada alterado nesta parte — revisei o código e os testes gerados e concordei com a abordagem (parâmetros `mixed` em vez de `float` tipado, para poder dar mensagens de erro específicas em vez de um `TypeError` genérico do PHP).
+**O que eu alterei do que a IA gerou**: As alterações que dirigi nesta parte estão consolidadas no resumo no fim do arquivo (Resumo: quais alterações realizei no código gerado). Onde não mexi — como os parâmetros `mixed` em vez de `float` tipado — foi por ter revisado o código e os testes gerados e concordado com a abordagem (evita um `TypeError` genérico do PHP em favor de mensagens de erro específicas), não por aceitar sem conferir.
 
 **Como validei**: rodei `php artisan test --filter=DescontoServiceTest` e conferi que os 11 testes passaram (11 assertions, 0 falhas) antes de aceitar a implementação como pronta.
 
@@ -42,7 +134,7 @@ Este arquivo registra, por parte do teste: as instruções reais que dei, em que
 
 **O que eu decidi (não a IA sozinha)**: escolhi `round($resultado, 2)` entre as três opções apresentadas.
 
-**O que eu alterei do que a IA gerou**: nada — implementação de uma linha (`return round($valor - $valor * $desconto / 100, 2);`) e um teste novo cobrindo o caso específico.
+**O que eu alterei do que a IA gerou**: As alterações que dirigi nesta parte estão consolidadas no resumo no fim do arquivo (Resumo: quais alterações realizei no código gerado) — aqui, a implementação de uma linha (`return round($valor - $valor * $desconto / 100, 2);`) e um teste novo cobrindo o caso específico.
 
 **Como validei**: rodei `php artisan test --filter=DescontoServiceTest` (12 testes, todos passando) e depois a suíte completa (20 testes). O teste novo verifica tanto o valor (`16.99`) quanto a ausência de "lixo" decimal (`number_format($resultado, 2) === '16.99'`).
 
@@ -58,7 +150,7 @@ Este arquivo registra, por parte do teste: as instruções reais que dei, em que
 - Perguntada sobre o critério de "aberta", escolhi um `status` com só 2 valores (`aberta`/`concluida`), evitando modelar um fluxo de 4 estados que o teste não pediu.
 - Perguntada sobre exclusão em cascata vs. bloqueio, escolhi **restrict** (bloquear exclusão de Cliente/Veículo com filhos), por segurança contra apagar histórico de Ordens de Serviço por engano.
 
-**O que eu alterei do que a IA gerou**: nenhuma alteração de código nesta parte — revisei o schema gerado (`sqlite_master`), os índices únicos de `cpf`/`placa`, e o resultado das 4 consultas rodadas contra os dados do seeder, e todos bateram com o esperado.
+**O que eu alterei do que a IA gerou**: As alterações que dirigi nesta parte estão consolidadas no resumo no fim do arquivo (Resumo: quais alterações realizei no código gerado). Onde não mexi diretamente no código gerado, foi por ter revisado o schema gerado (`sqlite_master`), os índices únicos de `cpf`/`placa`, e o resultado das 4 consultas rodadas contra os dados do seeder, e todos bateram com o esperado.
 
 **Decisão registrada, mas não perguntada**: a IA decidiu por conta própria que a soma de "valor total gasto" (consultas 3 e 4) inclui ordens com qualquer status (não só `concluida`), por ser a leitura mais literal do enunciado ("SUM(valor) + GROUP BY", sem filtro de status mencionado). Documentado em `docs/DECISOES.md` como uma leitura alternativa possível, para eu revisar se concordo.
 
@@ -87,7 +179,7 @@ Este arquivo registra, por parte do teste: as instruções reais que dei, em que
 
 **O que eu decidi (não a IA sozinha)**: incluir API Resource e testes automatizados na Parte 3 (pergunta feita antes de começar a codar).
 
-**O que eu alterei do que a IA gerou**: nada alterado diretamente — revisei o fluxo completo e o bug do `erro: "true"` foi corrigido pela própria IA após o teste manual expor o problema, antes de eu precisar apontar.
+**O que eu alterei do que a IA gerou**: As alterações que dirigi nesta parte estão consolidadas no resumo no fim do arquivo (Resumo: quais alterações realizei no código gerado). Revisei o fluxo completo, e o bug do `erro: "true"` foi corrigido pela própria IA após o teste manual expor o problema, antes de eu precisar apontar.
 
 **Como validei**: (1) testes manuais reais contra o ViaCEP via `php artisan serve` + `Invoke-WebRequest`, cobrindo os 4 status esperados (201, 200, 404, 422); (2) 6 testes automatizados com `Http::fake` cobrindo os mesmos caminhos mais a falha de integração (500) e a regressão do `erro` como string; (3) suíte completa do projeto rodada no final (19 testes, todos passando).
 
@@ -141,3 +233,16 @@ Ver [docs/BONUS.md](docs/BONUS.md) para o conteúdo completo (prompts + prints +
 **Como validei**: rodei `php artisan test` (20 testes, todos passando) e `php artisan route:list --path=api` para confirmar que os números e a rota citados no README batem com o estado real do projeto antes de escrever.
 
 **Cuidados antes de produção**: não aplicável — é documentação, não código.
+
+---
+
+## Resumo: quais alterações realizei no código gerado
+
+Não editei o código linha a linha. Intervim dirigindo decisões, pedindo mudanças e validando cada saída antes de aceitar. As principais foram:
+
+- **Consultas 3 e 4** (Parte 2): pedi para separar o `SUM(valor)` em três colunas (gasto concluído, gasto em aberto e o total dos dois), para distinguir o que já foi pago do que ainda está em aberto.
+- **Parte 1**: decidi lançar exceção em vez de corrigir o valor silenciosamente, e cobrir tudo com testes automatizados em vez de lista manual.
+- **Parte 2**: defini o status com dois valores e usei `restrictOnDelete()` no lugar de cascata, para não apagar histórico por engano.
+- **Parte 3**: pedi API Resource e testes, e direcionei a correção do bug em que o ViaCEP retornava `{"erro":"true"}` como string, o que fazia o sistema salvar um CEP inexistente em vez de responder 404.
+
+Onde não mexi no código, foi por ter revisado o que foi gerado e concordado, não por aceitar sem conferir.

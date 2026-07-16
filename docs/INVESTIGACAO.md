@@ -28,6 +28,17 @@ Verifico primeiro se o sistema está conseguindo se conectar ao banco (limite de
 
 Verifico se houve deploy ou atualização próximo ao horário em que o problema começou. Se houve, reviso o diff do último commit para entender o que mudou e se alguma alteração pode estar impactando a integração. Se não houve nenhum deploy, isso já reduz a chance de ser código e reforça as hipóteses de API externa ou credencial.
 
+## Variáveis de ambiente
+
+Verificaria se algo no `.env` mudou ou expirou desde ontem, já que é uma causa comum de "parou de repente" sem ninguém ter mexido no código: uma chave de API ou token da integração que expirou ou foi rotacionado, a URL da API externa apontando para o lugar errado, ou credenciais de banco alteradas. Compararia as variáveis atuais com o que era esperado, prestando atenção especial a qualquer segredo com data de validade.
+
+## Ambiente de homologação e produção
+
+Checaria se o problema acontece nos dois ambientes ou só em produção. Se em homologação funciona e em produção não, a diferença provavelmente está em configuração ou variável de ambiente específica de produção, não no código, o que estreita bastante a investigação. Reproduzir o erro em homologação primeiro também permite testar a correção sem risco antes de subir para produção.
+
+## Testes
+
+Rodaria a suíte de testes automatizados para ver se algo quebrou, e verificaria se existe cobertura para a integração de veículos especificamente. Se os testes passam mas o problema persiste em produção, isso é um sinal de que a falha está em algo que os testes não alcançam (ambiente externo, dados reais, configuração), e não na lógica da aplicação. Se não houver teste cobrindo esse fluxo, essa seria uma melhoria a fazer depois de resolver o incidente, para pegar uma regressão parecida mais cedo da próxima vez.
 
 ## Abordagem geral
 
