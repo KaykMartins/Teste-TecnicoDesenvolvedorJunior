@@ -124,6 +124,10 @@ Este arquivo registra, por parte do teste: as instruções reais que dei, em que
 
 **Instrução dada (complemento)**: pediu para adicionar também o "prompt puro do projeto bônus" (na verdade, o código-fonte gerado, `CadastroCliente.html`) junto com os docs do projeto — copiei para `docs/bonus/CadastroCliente.html` e referenciei em `docs/BONUS.md`. Não toquei em `docs/DECISOES.md`, como você já tinha deixado claro antes que esse arquivo não faz parte da documentação técnica do Laravel.
 
+**Instrução dada (complemento 2)**: você escreveu, com suas próprias palavras, a análise completa do que melhoraria antes de produção (CPF sem dígito verificador, ausência total de backend/segurança/LGPD, a distinção entre validação client-side como UX vs. segurança real, e o roadmap em ordem de prioridade). Pediu para eu anotar "nos docs de prompts e decisões" — copiei seu texto para substituir a seção "O que eu mudaria antes de produção" em `docs/BONUS.md` (que era só um rascunho meu, bem mais raso), sem alterar o conteúdo. Mantive fora de `docs/DECISOES.md`, pelo mesmo motivo de sempre: esse arquivo é sobre as decisões técnicas do projeto Laravel, não sobre o front-end à parte do Bônus.
+
+**Como validei**: nenhuma validação técnica aplicável — é uma análise textual, não código.
+
 Ver [docs/BONUS.md](docs/BONUS.md) para o conteúdo completo (prompts + prints + checklist de produção).
 
 ---
