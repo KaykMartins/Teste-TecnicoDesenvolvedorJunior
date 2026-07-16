@@ -28,18 +28,7 @@ Verifico primeiro se o sistema está conseguindo se conectar ao banco (limite de
 
 Verifico se houve deploy ou atualização próximo ao horário em que o problema começou. Se houve, reviso o diff do último commit para entender o que mudou e se alguma alteração pode estar impactando a integração. Se não houve nenhum deploy, isso já reduz a chance de ser código e reforça as hipóteses de API externa ou credencial.
 
-## Variáveis de ambiente
-
-_(pendente)_
-
-## Homologação vs. produção
-
-_(pendente)_
-
-## Testes
-
-_(pendente)_
 
 ## Abordagem geral
 
-De forma geral, minha ideia é não sair testando tudo de uma vez, e sim seguir a evidência: começo pelos logs, que apontam a direção, e a partir daí aprofundo no ponto mais provável — API externa, banco ou uma alteração recente. Isso ajuda a chegar na causa sem perder tempo verificando o que o erro já descartou.
+De forma geral, minha ideia é não sair testando tudo de uma vez, e sim seguir a evidência: começo pelos logs, que apontam a direção, e a partir daí aprofundo no ponto mais provável. API externa, banco ou uma alteração recente. Isso ajuda a chegar na causa sem perder tempo verificando o que o erro já descartou.
