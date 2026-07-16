@@ -55,5 +55,6 @@ Ver [docs/DECISOES.md](docs/DECISOES.md) para o detalhamento de cada decisão (o
 
 - [docs/DECISOES.md](docs/DECISOES.md) — decisões técnicas e seus porquês, por parte do teste.
 - [docs/INVESTIGACAO.md](docs/INVESTIGACAO.md) — raciocínio de investigação de problemas (Parte 5).
+- [docs/BONUS.md](docs/BONUS.md) — prompts, prints e explicação da tela de cadastro de clientes (front-end à parte, sem backend).
 - [PROMPTS.md](PROMPTS.md) — uso de IA no desenvolvimento deste projeto.
 - [sql/consultas.sql](sql/consultas.sql) — consultas SQL da Parte 2.

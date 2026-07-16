@@ -114,4 +114,16 @@ Este arquivo registra, por parte do teste: as instruções reais que dei, em que
 
 ---
 
-_As próximas seções (Bônus e finalização) serão adicionadas conforme o desenvolvimento avança._
+## Bônus — Tela de cadastro de clientes
+
+**Instrução dada**: "O bônus eu finalizei, realizei os prints... Adicione essas informações em um novo arquivo de prompt (bonus) e comite" — você gerou a tela em uma ferramenta separada (Claude Fable 5, front-end apenas), com dois prompts (criação e redesign visual), e pediu para eu registrar os prompts, os prints e a explicação de produção em um arquivo dedicado, em vez de no `PROMPTS.md`.
+
+**Onde a IA ajudou**: criei `docs/BONUS.md` com os dois prompts na íntegra (sem alterar o texto que você usou), copiei os dois prints de `Downloads` para `docs/bonus/` (para ficarem versionados no repositório, já que um avaliador clonando o projeto não tem acesso à sua pasta Downloads), e escrevi a explicação do que mudaria antes de produção — incluindo notar que a tela ainda não integra com o endpoint real de CEP que já existe na Parte 3 (`POST /api/enderecos`).
+
+**Como validei**: abri os dois prints para conferir que a tela realmente cobre os campos e o comportamento pedidos no enunciado original (13 campos, obrigatórios marcados, fluxo em 3 etapas, resumo lateral) antes de escrever a explicação de produção.
+
+Ver [docs/BONUS.md](docs/BONUS.md) para o conteúdo completo (prompts + prints + checklist de produção).
+
+---
+
+_A seção final (finalização/README) será adicionada conforme o desenvolvimento avança._
