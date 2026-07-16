@@ -41,6 +41,6 @@ class DescontoService
             throw new InvalidArgumentException('O desconto deve estar entre 0 e 100.');
         }
 
-        return $valor - $valor * $desconto / 100;
+        return round($valor - $valor * $desconto / 100, 2);
     }
 }

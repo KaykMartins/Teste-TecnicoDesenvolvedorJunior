@@ -22,6 +22,16 @@ class DescontoServiceTest extends TestCase
         $this->assertEquals(90.0, $this->service->calcularDesconto(100, 10));
     }
 
+    public function test_resultado_e_arredondado_para_duas_casas_decimais(): void
+    {
+        // 19.99 - 19.99 * 15 / 100 = 16.9915, que em ponto flutuante pode
+        // aparecer como algo como 16.991499999999998 sem o round().
+        $resultado = $this->service->calcularDesconto(19.99, 15);
+
+        $this->assertEquals(16.99, $resultado);
+        $this->assertSame('16.99', number_format($resultado, 2));
+    }
+
     public function test_valor_zero_retorna_zero(): void
     {
         $this->assertEquals(0.0, $this->service->calcularDesconto(0, 10));

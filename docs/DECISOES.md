@@ -52,6 +52,16 @@ Este documento registra as decisões tomadas ao longo do teste técnico: qual er
 
 Rodado com `php artisan test --filter=DescontoServiceTest` — 11 testes, 11 passando.
 
+**Arredondamento (revisão pedida)**: o método fazia conta de dinheiro em `float` sem tratar arredondamento. `calcularDesconto(19.99, 15)` devolve matematicamente `16.9915`, mas em ponto flutuante o valor real armazenado é algo como `16.99149999999999849365` (confirmado com `printf('%.20f', ...)`) — o PHP só esconde esse "lixo" na exibição padrão (`var_dump`/`echo` mostram `16.9915` normalmente), mas ele aparece em serializações com mais precisão (`json_encode` com `JSON_PRESERVE_ZERO_FRACTION` desligado, comparações estritas, etc.).
+
+Três opções foram avaliadas:
+
+1. **`round($resultado, 2)`** — arredonda só a saída, mantém a assinatura `float` atual. Simples, e já compatível com a precisão de 2 casas que o resto do domínio usa (`ordens_servico.valor` é `decimal(10,2)` no banco, e o cast do model já é `'valor' => 'decimal:2'`). Risco: o erro de representação do float ainda existe internamente: se o resultado entrar em mais contas encadeadas sem re-arredondar a cada etapa, o erro pode reaparecer — mas para "calcular um desconto e guardar o resultado", isso raramente é visível.
+2. **BCMath** (`bcmul`/`bcsub` com strings) — aritmética decimal exata, sem nenhum erro de ponto flutuante em nenhuma etapa. Descartada aqui: mudaria a assinatura do método (entrada/saída em `string`, não `float`), exigiria reescrever os 11 testes existentes que comparam contra `float`, e é mais poder do que um único cálculo de desconto pede — compensa mais em sistemas com muitas operações financeiras encadeadas.
+3. **Centavos como inteiro** — converter para centavos, calcular em inteiro (exato), converter de volta. Descartada: converter `19.99` (float, que já pode chegar com erro de representação) em `1999` centavos ainda exige um `round()` na entrada — não elimina o arredondamento, só move ele de lugar. Além disso, o resto do domínio trabalha em reais/decimal, não centavos; usar centavos só neste método criaria uma representação de dinheiro inconsistente dentro do projeto.
+
+**Decisão: opção 1 (`round($resultado, 2)`)** — menor mudança, compatível com a precisão já usada no restante do domínio. Implementado como `return round($valor - $valor * $desconto / 100, 2);`. Teste adicionado (`test_resultado_e_arredondado_para_duas_casas_decimais`) comparando `calcularDesconto(19.99, 15)` contra `16.99`, e confirmando com `number_format($resultado, 2) === '16.99'` que não sobra "lixo" decimal no resultado. 12 testes no arquivo, todos passando (20 no projeto inteiro).
+
 ## Parte 2 — Banco de dados (Clientes, Veículos, Ordens de Serviço)
 
 **Critério de "aberta" (decisão sua)**: o campo `status` de `ordens_servico` tem apenas dois valores possíveis, via `enum('status', ['aberta', 'concluida'])`: `aberta` e `concluida`. A consulta obrigatória #2 filtra literalmente `status = 'aberta'` — não há ambiguidade porque não existe um terceiro estado (como "em andamento" ou "cancelada") que pudesse ser confundido com "aberta".

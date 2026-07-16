@@ -36,6 +36,18 @@ Este arquivo registra, por parte do teste: as instruções reais que dei, em que
 - Se este método for exposto via API (endpoint HTTP), a `InvalidArgumentException` não deve vazar como erro 500 puro — precisaria de um handler específico (ou uma Form Request antes de chamar o service) para virar uma resposta 422 com mensagem amigável.
 - Validar se `mixed $valor, mixed $desconto` é aceitável no restante do projeto ou se, ao integrar com outras partes (ex.: Ordens de Serviço), faz mais sentido tipar como `int|float` e tratar `null` como caso à parte antes de chamar o service.
 
+**Instrução dada (revisão)**: você percebeu que o método fazia conta de dinheiro em `float` sem tratar arredondamento (`calcularDesconto(19.99, 15)` devolve `16.9915`, que em float pode aparecer com "lixo" tipo `16.991499...`). Pediu para eu explicar as opções (round, BCMath, centavos como inteiro) com o trade-off de cada uma, perguntar antes de escolher, e só então documentar em `docs/DECISOES.md` — sem implementar antes de decidir.
+
+**Onde a IA ajudou**: expliquei as 3 opções com prós/contras específicos para este projeto (ex.: BCMath quebraria os 11 testes existentes que comparam `float`; centavos criaria uma representação de dinheiro inconsistente com o resto do domínio, que usa `decimal(10,2)`); confirmei o comportamento real do float com `printf('%.20f', ...)` antes de escrever a explicação, em vez de descrever de memória.
+
+**O que eu decidi (não a IA sozinha)**: escolhi `round($resultado, 2)` entre as três opções apresentadas.
+
+**O que eu alterei do que a IA gerou**: nada — implementação de uma linha (`return round($valor - $valor * $desconto / 100, 2);`) e um teste novo cobrindo o caso específico.
+
+**Como validei**: rodei `php artisan test --filter=DescontoServiceTest` (12 testes, todos passando) e depois a suíte completa (20 testes). O teste novo verifica tanto o valor (`16.99`) quanto a ausência de "lixo" decimal (`number_format($resultado, 2) === '16.99'`).
+
+**Cuidados antes de produção**: `round()` resolve o caso de um cálculo isolado, mas se este valor entrar em somas/cálculos encadeados sem re-arredondar a cada etapa, o erro de ponto flutuante pode reaparecer — vale revisar se algum fluxo futuro (ex.: somar várias Ordens de Serviço com desconto aplicado) precisa de um cuidado adicional.
+
 ## Parte 2 — Banco de dados (Clientes, Veículos, Ordens de Serviço)
 
 **Instrução dada**: "Podemos seguir" (após a Parte 1), seguindo a especificação já definida no briefing inicial (migrations, models com relações, `sql/consultas.sql` com as 4 consultas comentadas, seeder de exemplo).
