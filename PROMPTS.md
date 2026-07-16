@@ -122,6 +122,8 @@ Este arquivo registra, por parte do teste: as instruções reais que dei, em que
 
 **Como validei**: abri os dois prints para conferir que a tela realmente cobre os campos e o comportamento pedidos no enunciado original (13 campos, obrigatórios marcados, fluxo em 3 etapas, resumo lateral) antes de escrever a explicação de produção.
 
+**Instrução dada (complemento)**: pediu para adicionar também o "prompt puro do projeto bônus" (na verdade, o código-fonte gerado, `CadastroCliente.html`) junto com os docs do projeto — copiei para `docs/bonus/CadastroCliente.html` e referenciei em `docs/BONUS.md`. Não toquei em `docs/DECISOES.md`, como você já tinha deixado claro antes que esse arquivo não faz parte da documentação técnica do Laravel.
+
 Ver [docs/BONUS.md](docs/BONUS.md) para o conteúdo completo (prompts + prints + checklist de produção).
 
 ---

@@ -2,6 +2,10 @@
 
 Tela de front-end (sem backend, sem persistência real) gerada em uma ferramenta separada (Claude Fable 5, com skill de desenvolvedor front-end), fora do escopo do Laravel — só o front-end estático, como pedido no enunciado.
 
+## Código-fonte
+
+[bonus/CadastroCliente.html](bonus/CadastroCliente.html) — arquivo único, pronto para abrir direto no navegador (React + Babel Standalone + Tailwind via CDN, sem build step). É o resultado final dos dois prompts abaixo.
+
 ## Prints
 
 ![Tela de cadastro de clientes — parte 1 (Identificação e Contato)](bonus/print-cadastro-clientes-1.png)
